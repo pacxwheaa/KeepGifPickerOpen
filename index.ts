@@ -1,4 +1,4 @@
-import { definePlugin } from "vencord";
+import definePlugin from "@utils/types";
 
 export default definePlugin({
     name: "KeepGifPickerOpen",
@@ -6,7 +6,7 @@ export default definePlugin({
     authors: [
         {
             name: "pacxwheaa",
-            id: "0"
+            id: 0n
         }
     ],
     patches: [
