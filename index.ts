@@ -1,5 +1,7 @@
 import definePlugin from "@utils/types";
 
+const disablePickerCloseRe = /(?:\w+\.)?(?:closeExpressionPicker|closePopout)\([^)]*\)/g;
+
 export default definePlugin({
     name: "KeepGifPickerOpen",
     description: "Prevents the Discord GIF picker from closing after sending a GIF.",
@@ -11,24 +13,31 @@ export default definePlugin({
     ],
     patches: [
         {
-            find: "onSelectGIF",
+            find: "GIF_PICKER_RESULT_CLICK",
             replacement: {
-                match: /([A-Za-z0-9_$]+\.)?closeExpressionPicker\(\)/g,
+                match: disablePickerCloseRe,
                 replace: "void 0"
             }
         },
         {
-            find: "GIF_PICKER_RESULT_CLICK",
+            find: "onSelectGIF",
             replacement: {
-                match: /([A-Za-z0-9_$]+\.)?closePopout\(\)/g,
+                match: disablePickerCloseRe,
                 replace: "void 0"
             }
         },
         {
             find: "sendGIF",
             replacement: {
-                match: /([A-Za-z0-9_$]+\.)?closeExpressionPicker\(\)/g,
+                match: disablePickerCloseRe,
                 replace: "void 0"
+            }
+        },
+        {
+            find: "setExpressionPickerView",
+            replacement: {
+                match: /\breturn\s+(?:\w+\.)?(?:closeExpressionPicker|closePopout)\([^)]*\)/g,
+                replace: "return void 0"
             }
         }
     ]
