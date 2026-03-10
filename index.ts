@@ -1,6 +1,26 @@
 import definePlugin from "@utils/types";
+import { ExpressionPickerStore } from "@webpack/common";
 
-const disablePickerCloseRe = /(?:\w+\.)?(?:closeExpressionPicker|closePopout)\([^)]*\)/g;
+let restoreTimer: ReturnType<typeof setTimeout> | undefined;
+
+function suppressGifPickerCloseForTick() {
+    const store = ExpressionPickerStore as {
+        closePopout?: () => void;
+        closeExpressionPicker: () => void;
+    };
+
+    const originalCloseExpressionPicker = store.closeExpressionPicker;
+    const originalClosePopout = store.closePopout;
+
+    store.closeExpressionPicker = () => { };
+    if (originalClosePopout) store.closePopout = () => { };
+
+    if (restoreTimer) clearTimeout(restoreTimer);
+    restoreTimer = setTimeout(() => {
+        store.closeExpressionPicker = originalCloseExpressionPicker;
+        if (originalClosePopout) store.closePopout = originalClosePopout;
+    }, 0);
+}
 
 export default definePlugin({
     name: "KeepGifPickerOpen",
@@ -13,32 +33,12 @@ export default definePlugin({
     ],
     patches: [
         {
-            find: "GIF_PICKER_RESULT_CLICK",
+            find: "handleSelectGIF=",
             replacement: {
-                match: disablePickerCloseRe,
-                replace: "void 0"
-            }
-        },
-        {
-            find: "onSelectGIF",
-            replacement: {
-                match: disablePickerCloseRe,
-                replace: "void 0"
-            }
-        },
-        {
-            find: "sendGIF",
-            replacement: {
-                match: disablePickerCloseRe,
-                replace: "void 0"
-            }
-        },
-        {
-            find: "setExpressionPickerView",
-            replacement: {
-                match: /\breturn\s+(?:\w+\.)?(?:closeExpressionPicker|closePopout)\([^)]*\)/g,
-                replace: "return void 0"
+                match: /handleSelectGIF=(\i)=>\{/,
+                replace: "$&$self.suppressGifPickerCloseForTick();"
             }
         }
-    ]
+    ],
+    suppressGifPickerCloseForTick
 });
